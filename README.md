@@ -8,7 +8,7 @@ The general aim of Linklib is to play the role of a digital library of audio fil
 
 ## The Minimum Viable Product:
 
-* Site connects to MongoDB to maintain collection of 'entries'
+* Site connects to PostgresQL to maintain collection of 'entries'
 * The site allows users to create entries of publicly hosted MP3 files
 * Entries of Mp3 files will contain:
   * Author Name
