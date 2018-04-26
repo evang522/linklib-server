@@ -4,6 +4,7 @@ author text not null,
 date date not null default CURRENT_DATE,
 description text,
 hyperlink text not null,
+title text not null,
 tags text[]
 );
 
@@ -14,9 +15,11 @@ insert into audioentries(
 author,
 description,
 tags,
+title,
 hyperlink
 ) values (
 'Evan Garrett',
  'This is a cool thing',
 '{Politics, Society}',
+'A COOL TITLE'
 'https://audiobooks.com/thisone.mp3');

@@ -1,32 +1,32 @@
 #================================== Import Dependencies ====================>
 
-from flask import Flask, Response, request, jsonify
+from flask import Flask, Response, request, jsonify, send_from_directory
+
 from os import environ
 import json
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+
 #  Define App
-app = Flask(__name__)
+app = Flask(__name__,static_url_path='')
 
-
-# Example Greeting Route /TODO delete this
-@app.route('/api/greeting', methods=['GET'])
-def get_user():
-  data = {"hello":"no"}
-  data = json.dumps(data)
-  return Response(data, 200, mimetype='application/json')
-
+# # Serve React App
+# @app.route('/', defaults={'path': ''})
+# @app.route('/<path:path>')
+# def serve(path):
+#     if path != "" and os.path.exists("react_app/build/" + path):
+#         return send_from_directory('react_app/build', path)
+#     else:
+#         return send_from_directory('react_app/build', 'index.html')
 
 
 
 
 #================================== Connect Database ====================>
 connstring = "dbname=sdwtkwev user=sdwtkwev password=Qjp6QPRO605LrhiMci2dZdXa5piUkQZ0 host=pellefant.db.elephantsql.com"
-try:
-  dbconn = psycopg2.connect(connstring)
-except:
-  print('Database connection failed')
+
+dbconn = psycopg2.connect(connstring)
 
 # activate connection cursor
 cur = dbconn.cursor(cursor_factory=RealDictCursor)
@@ -61,7 +61,7 @@ def new_entry():
   # Create new Entry Object
   new_entry = {}
   optional_fields_list = ['description','tags']
-  required_fields = ['author','hyperlink']
+  required_fields = ['author','hyperlink','title']
 
   for k in required_fields:
     if data.get(k) == None:
@@ -75,33 +75,71 @@ def new_entry():
   
   try:
     cur.execute("""
-      INSERT INTO audioentries (author, description, hyperlink, tags) VALUES (
-        %(author)s, %(description)s, %(hyperlink)s, %(tags)s
+      INSERT INTO audioentries (author, description, hyperlink, tags, title) VALUES (
+        %(author)s, %(description)s, %(hyperlink)s, %(tags)s, %(title)s
       )
-      """, {'author':new_entry.get('author'), 'description': new_entry.get('description'), 'hyperlink': new_entry.get('hyperlink'), 'tags':new_entry.get('tags')})
+      """, {'author':new_entry.get('author'), 'description': new_entry.get('description'), 'hyperlink': new_entry.get('hyperlink'), 'tags':new_entry.get('tags'), 'title':new_entry.get('title')})
     dbconn.commit()
   except:
+    raise
     return jsonify({'error':'Internal Server Error', 'status':500}), 500
   return Response(json.dumps(new_entry, default=str), 201, mimetype='application/json')
 
 
 #================================== Update Entries route ====================>
 
-# @app.route('/api/entries/<id>', methods=['PUT'])
-# def edit_entry(id):
-#   print('Editing id {0}'.form(id))
+@app.route('/api/entries/<id>', methods=['PUT'])
+def edit_entry(id):
+  print('Editing id {0}'.format(id))
 
-#   update_fields = ['author','']
-#   updatedata = request.get_json()
-#   for k in updatedata:
-#     if k
+  update_fields = ['author','description','hyperlink','title']
+  updatedata = request.get_json()
+  update_dict = {}
+
+  for k in update_fields:
+    if updatedata.get(k) != None:
+      update_dict[k] = updatedata.get(k)
+
+  try: 
+    cur.execute("""
+    UPDATE audioentries SET
+    author = COALESCE(%(author)s,author),
+    description = COALESCE(%(description)s, description),
+    hyperlink = COALESCE(%(hyperlink)s, hyperlink),
+    title = COALESCE(%(title)s, title)
+    WHERE id=%(id)s
+    """, {'author':update_dict.get('author'), 'description':update_dict.get('description'), 'hyperlink':update_dict.get('hyperlink'), 'title':update_dict.get('title'), 'id':id})
+    dbconn.commit()
+  except:
+    raise
+    return jsonify({'error':'Internal Server Error', 'status':'500'}), 500
+  
+  return jsonify({'status':200, 'message':'Update Successful', 'updated fields': update_dict}), 200
+
+
+#================================== Delete Item Route ====================>
+
+@app.route('/api/entries/<id>', methods=['DELETE'])
+def delete_entry(id):
+
+  try:
+    cur.execute("""
+    DELETE FROM audioentries WHERE id=%(id)s
+    """, {'id':id})
+    dbconn.commit()
+  except:
+    raise
+    return jsonify({'error':'Internal server error', 'status':'500'}), 500
+  
+  return jsonify({'status':204, 'message':'deleted successfully'}), 204
 
 
 
 
-# # Conditional run based on environment
-# if __name__ == "__main__":
-#   try:
-#      app.run(host=environ['IP'],port=int(environ['PORT']))
-#   except:
-#     raise
+
+# Conditional run based on environment
+if __name__ == "__main__":
+  try:
+     app.run(host=environ['IP'],port=int(environ['PORT']))
+  except:
+    raise
