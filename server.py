@@ -11,14 +11,10 @@ from psycopg2.extras import RealDictCursor
 #  Define App
 app = Flask(__name__,static_url_path='')
 
-# # Serve React App
-# @app.route('/', defaults={'path': ''})
-# @app.route('/<path:path>')
-# def serve(path):
-#     if path != "" and os.path.exists("react_app/build/" + path):
-#         return send_from_directory('react_app/build', path)
-#     else:
-#         return send_from_directory('react_app/build', 'index.html')
+
+app.route('/', methods=['GET'])
+def serve_html():
+  return send_static_file('index.html')
 
 
 
