@@ -140,6 +140,6 @@ def delete_entry(id):
 # Conditional run based on environment
 if __name__ == "__main__":
   try:
-     app.run(host=environ['IP'],port=int(environ['PORT']))
+     app.run(host=environ.get('IP', '0.0.0.0'),port=int(environ.get('PORT', '8080')))
   except:
     raise
