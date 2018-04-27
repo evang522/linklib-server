@@ -1,20 +1,19 @@
 #================================== Import Dependencies ====================>
 
 from flask import Flask, Response, request, jsonify, send_from_directory
-
 from os import environ
 import json
 import psycopg2
 from psycopg2.extras import RealDictCursor
-
+from flask_cors import CORS
 
 #  Define App
-app = Flask(__name__,static_url_path='')
+app = Flask(__name__)
+CORS(app)
 
-
-app.route('/', methods=['GET'])
-def serve_html():
-  return send_static_file('index.html')
+# app.route('/', methods=['GET'])
+# def serve_html():
+#   return send_static_file('index.html')
 
 
 
