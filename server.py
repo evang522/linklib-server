@@ -31,7 +31,14 @@ cur = dbconn.cursor(cursor_factory=RealDictCursor)
 #================================== GET ALL ENTRIES ROUTE ====================>
 @app.route('/api/entries', methods=['GET'])
 def get_entries():
-  cur.execute("SELECT * FROM audioentries")
+  if request.args.get('searchTerm') != None:
+    searchTerm = request.args.get('searchTerm').lower()
+    print(searchTerm)
+    sql="SELECT * FROM audioentries WHERE LOWER(title) LIKE %(like)s OR LOWER(description) LIKE %(like)s OR LOWER(author) LIKE %(like)s ESCAPE '-'"
+    cur.execute(sql, dict(like= '%'+searchTerm+'%'))
+    # cur.execute("SELECT * FROM audioentries WHERE title ILIKE   %(searchTerm)s%", {'searchTerm':request.args.get('searchTerm')})
+  else:
+    cur.execute("SELECT * FROM audioentries")
   data = cur.fetchall()
   return Response(json.dumps(data, default=str), 200, mimetype='application/json')
 
