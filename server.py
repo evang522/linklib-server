@@ -27,14 +27,14 @@ dbconn = psycopg2.connect(connstring)
 cur = dbconn.cursor(cursor_factory=RealDictCursor)
 
 
-
+# TODO ILIKE
 #================================== GET ALL ENTRIES ROUTE ====================>
 @app.route('/api/entries', methods=['GET'])
 def get_entries():
   if request.args.get('searchTerm') != None:
     searchTerm = request.args.get('searchTerm').lower()
     print(searchTerm)
-    sql="SELECT * FROM audioentries WHERE LOWER(title) LIKE %(like)s OR LOWER(description) LIKE %(like)s OR LOWER(author) LIKE %(like)s ESCAPE '-'"
+    sql="SELECT * FROM audioentries WHERE title ILIKE %(like)s OR description ILIKE %(like)s OR author ILIKE %(like)s OR array_to_string(tags, '||') ILIKE %(like)s"
     cur.execute(sql, dict(like= '%'+searchTerm+'%'))
     # cur.execute("SELECT * FROM audioentries WHERE title ILIKE   %(searchTerm)s%", {'searchTerm':request.args.get('searchTerm')})
   else:
