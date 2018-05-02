@@ -23,3 +23,11 @@ hyperlink
 '{Politics, Society}',
 'A COOL TITLE'
 'https://audiobooks.com/thisone.mp3');
+
+
+CREATE TABLE users (
+  id serial PRIMARY KEY,
+  name text not null,
+  email text not null UNIQUE,
+  password text not null
+)

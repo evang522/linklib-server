@@ -57,13 +57,14 @@ def login():
     formatted_login_data[k] = submitted_login_data[k]
   cur.execute(
     """
-    SELECT * FROM users WHERE email=%(email)s
+    SELECT id, name, email, password FROM users WHERE email=%(email)s
     """, {'email':formatted_login_data.get('email')}
   )
   data = cur.fetchall()
   db_password = data[0].get('password')
+
   if bcrypt.checkpw(formatted_login_data.get('password').encode('utf8'), db_password.encode('utf8')):
-    token = jwt.encode({'name':data[0].get('name'), 'email':data[0].get('email')}, jwt_secret, algorithm='HS256')
+    token = jwt.encode({'name':data[0].get('name'), 'email':data[0].get('email'), 'id':data[0].get('id')}, jwt_secret, algorithm='HS256')
     return jsonify({'token':token.decode('utf8')})
   else:
     return jsonify({'error':'Incorrect Password', 'status':400}), 400
