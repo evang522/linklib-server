@@ -109,8 +109,6 @@ def create_user():
 
 
 
-
-
 #================================== ENTRIES ====================>
 #================================== GET ALL ENTRIES ROUTE ====================>
 @app.route('/api/entries', methods=['GET'])
