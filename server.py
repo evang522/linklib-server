@@ -117,10 +117,10 @@ def get_entries():
   if request.args.get('searchTerm') != None:
     searchTerm = request.args.get('searchTerm').lower()
     print(searchTerm)
-    sql="SELECT * FROM audioentries WHERE title ILIKE %(like)s OR description ILIKE %(like)s OR author ILIKE %(like)s OR array_to_string(tags, '||') ILIKE %(like)s"
+    sql="SELECT audioentries.id,author,date, poster, description,hyperlink,title,tags, users.name as postername,users.email as posteremail FROM audioentries LEFT JOIN users ON audioentries.poster = users.id WHERE title ILIKE %(like)s OR description ILIKE %(like)s OR author ILIKE %(like)s OR array_to_string(tags, '||') ILIKE %(like)s"
     cur.execute(sql, dict(like= '%'+searchTerm+'%'))
   else:
-    cur.execute("SELECT * FROM audioentries")
+    cur.execute("SELECT audioentries.id,author,date, poster, description,hyperlink,title,tags, users.name as postername,users.email as posteremail FROM audioentries LEFT JOIN users ON audioentries.poster = users.id")
   data = cur.fetchall()
   return Response(json.dumps(data, default=str), 200, mimetype='application/json')
 
