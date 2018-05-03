@@ -141,6 +141,9 @@ def get_entry(id):
 @app.route('/api/entries', methods=['POST'])
 def new_entry():
   data = request.get_json()
+  authtoken = request.headers.get('Authorization').split(' ')[1]
+  userinfo = jwt.decode(authtoken, jwt_secret, algorithms='HS256')
+  print(userinfo)
 
   # Create new Entry Object
   new_entry = {}
@@ -159,10 +162,10 @@ def new_entry():
   
   try:
     cur.execute("""
-      INSERT INTO audioentries (author, description, hyperlink, tags, title) VALUES (
-        %(author)s, %(description)s, %(hyperlink)s, %(tags)s, %(title)s
+      INSERT INTO audioentries (author, description, hyperlink, tags, title, poster) VALUES (
+        %(author)s, %(description)s, %(hyperlink)s, %(tags)s, %(title)s, %(poster)s
       )
-      """, {'author':new_entry.get('author'), 'description': new_entry.get('description'), 'hyperlink': new_entry.get('hyperlink'), 'tags':new_entry.get('tags'), 'title':new_entry.get('title')})
+      """, {'author':new_entry.get('author'), 'description': new_entry.get('description'), 'hyperlink': new_entry.get('hyperlink'), 'tags':new_entry.get('tags'), 'title':new_entry.get('title'), 'poster':userinfo.get('id')})
     dbconn.commit()
   except:
     raise

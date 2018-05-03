@@ -5,7 +5,8 @@ date date not null default CURRENT_DATE,
 description text,
 hyperlink text not null,
 title text not null,
-tags text[]
+tags text[],
+poster 
 );
 
 
