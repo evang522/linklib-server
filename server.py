@@ -6,16 +6,13 @@ import json
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from flask_cors import CORS
+from functools import wraps
+import jwt
+import bcrypt
 
 #  Define App
 app = Flask(__name__)
 CORS(app)
-
-# app.route('/', methods=['GET'])
-# def serve_html():
-#   return send_static_file('index.html')
-
-
 
 
 #================================== Connect Database ====================>
@@ -27,16 +24,101 @@ dbconn = psycopg2.connect(connstring)
 cur = dbconn.cursor(cursor_factory=RealDictCursor)
 
 
-# TODO ILIKE
+#================================== Authentication ====================>
+jwt_secret = environ.get('JWT_SECRET')
+
+# encoded = jwt.encode({'hi':'there'}, jwt_secret, algorithm='HS256')
+# decoded = jwt.decode(encoded, 'jwt_secreta', algorithms='HS256')
+
+# Define Auth middleware
+def auth_check(f):
+    @wraps(f)
+    def func_wrapper(*args, **kwargs):
+        if request.headers.get('Authorization') == None:
+          return jsonify({'error':'No JWT token present. Please log in','status':403}), 403
+        auth_header = request.headers.get('Authorization')
+        auth_header = auth_header.split(' ')
+        token = auth_header[1]
+        try:
+          decoded = jwt.decode(token, jwt_secret, algorithms='HS256')
+        except:
+          return jsonify({'error':'JWT token invalid. Please log in again', 'status':403}), 403
+        return f(*args, **kwargs)
+    return func_wrapper
+
+@app.route('/api/login', methods=['POST'])
+def login():
+  submitted_login_data = request.get_json()
+  formatted_login_data = {}
+  required_fields = ['email','password']
+  for k in required_fields:
+    if not k in submitted_login_data:
+      return jsonify({'error':'Missing required field.'}), 400
+    formatted_login_data[k] = submitted_login_data[k]
+  cur.execute(
+    """
+    SELECT id, name, email, password FROM users WHERE email=%(email)s
+    """, {'email':formatted_login_data.get('email')}
+  )
+  data = cur.fetchall()
+  db_password = data[0].get('password')
+
+  if bcrypt.checkpw(formatted_login_data.get('password').encode('utf8'), db_password.encode('utf8')):
+    token = jwt.encode({'name':data[0].get('name'), 'email':data[0].get('email'), 'id':data[0].get('id')}, jwt_secret, algorithm='HS256')
+    return jsonify({'token':token.decode('utf8')})
+  else:
+    return jsonify({'error':'Incorrect Password', 'status':400}), 400
+
+
+#================================== USERS ====================>
+#================================== CREATE NEW USER ====================>
+@app.route('/api/users', methods=['POST'])
+def create_user():
+  data = request.get_json()
+  required_fields = ['name','email','password','password1']
+  new_user = {}
+  for k in required_fields:
+    if not k in data:
+      return jsonify({'error':'Missing required field', 'status':400}), 400
+    if k == 'password':
+      if len(data.get(k)) < 8:
+        return jsonify({'error':'Password requires 8 characters minimum', 'status':400}), 400
+      l = data.get(k).strip()
+      if len(data.get(k)) != len(l):
+        return jsonify({'error':'Password contains whitespace', 'status':400}), 400
+      if data.get(k) != data.get('password1'):
+        return jsonify({'error':'Passwords do not match.', 'status':400}), 400
+    if k == 'email':
+      if '@' not in data.get(k):
+        return jsonify({'error':'Invalid email format', 'status':400}), 400
+    if k != 'password1':
+      new_user[k] = data.get(k)
+  
+  hashed_password = bcrypt.hashpw(new_user.get('password').encode('utf8'),bcrypt.gensalt())
+  new_user['password'] = hashed_password.decode('utf8')
+
+  cur.execute("""
+    INSERT INTO users (name,email,password) VALUES (%(name)s, %(email)s,%(password)s)
+  """, {'name':new_user.get('name'), 'email':new_user.get('email'), 'password':new_user.get('password')})
+  dbconn.commit()
+  print(new_user)
+  return jsonify({'message':'New user created!'}), 201
+
+
+
+
+
+
+#================================== ENTRIES ====================>
 #================================== GET ALL ENTRIES ROUTE ====================>
 @app.route('/api/entries', methods=['GET'])
+@auth_check
 def get_entries():
   if request.args.get('searchTerm') != None:
     searchTerm = request.args.get('searchTerm').lower()
     print(searchTerm)
     sql="SELECT * FROM audioentries WHERE title ILIKE %(like)s OR description ILIKE %(like)s OR author ILIKE %(like)s OR array_to_string(tags, '||') ILIKE %(like)s"
     cur.execute(sql, dict(like= '%'+searchTerm+'%'))
-    # cur.execute("SELECT * FROM audioentries WHERE title ILIKE   %(searchTerm)s%", {'searchTerm':request.args.get('searchTerm')})
   else:
     cur.execute("SELECT * FROM audioentries")
   data = cur.fetchall()
@@ -59,6 +141,9 @@ def get_entry(id):
 @app.route('/api/entries', methods=['POST'])
 def new_entry():
   data = request.get_json()
+  authtoken = request.headers.get('Authorization').split(' ')[1]
+  userinfo = jwt.decode(authtoken, jwt_secret, algorithms='HS256')
+  print(userinfo)
 
   # Create new Entry Object
   new_entry = {}
@@ -77,10 +162,10 @@ def new_entry():
   
   try:
     cur.execute("""
-      INSERT INTO audioentries (author, description, hyperlink, tags, title) VALUES (
-        %(author)s, %(description)s, %(hyperlink)s, %(tags)s, %(title)s
+      INSERT INTO audioentries (author, description, hyperlink, tags, title, poster) VALUES (
+        %(author)s, %(description)s, %(hyperlink)s, %(tags)s, %(title)s, %(poster)s
       )
-      """, {'author':new_entry.get('author'), 'description': new_entry.get('description'), 'hyperlink': new_entry.get('hyperlink'), 'tags':new_entry.get('tags'), 'title':new_entry.get('title')})
+      """, {'author':new_entry.get('author'), 'description': new_entry.get('description'), 'hyperlink': new_entry.get('hyperlink'), 'tags':new_entry.get('tags'), 'title':new_entry.get('title'), 'poster':userinfo.get('id')})
     dbconn.commit()
   except:
     raise
