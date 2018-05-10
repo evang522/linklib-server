@@ -62,7 +62,7 @@ def login():
   )
   data = cur.fetchall()
   if data == []:
-    return jsonify({'error':'User not found. Please create an Account', 'status':400}), 400
+    return jsonify({'error':'User not found. Please create an Account', 'status':404}), 404
   db_password = data[0].get('password')
 
   if bcrypt.checkpw(formatted_login_data.get('password').encode('utf8'), db_password.encode('utf8')):
