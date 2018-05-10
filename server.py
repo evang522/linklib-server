@@ -55,6 +55,7 @@ def login():
     if not k in submitted_login_data:
       return jsonify({'error':'Missing required field.'}), 400
     formatted_login_data[k] = submitted_login_data[k]
+    formatted_login_data['email'] = formatted_login_data['email'].lower()
   cur.execute(
     """
     SELECT id, name, email, password FROM users WHERE email=%(email)s
@@ -95,6 +96,8 @@ def create_user():
         return jsonify({'error':'Invalid email format', 'status':400}), 400
     if k != 'password1':
       new_user[k] = data.get(k)
+    
+  new_user['email'] = new_user.get('email').lower()
   
   hashed_password = bcrypt.hashpw(new_user.get('password').encode('utf8'),bcrypt.gensalt())
   new_user['password'] = hashed_password.decode('utf8')
