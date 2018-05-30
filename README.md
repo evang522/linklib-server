@@ -7,10 +7,13 @@ The aim of Linklib is to play the role of a digital library of audio files such 
 
 
 ScreenShots: 
+## 
+![alt text](http://evanhgarrett.com/src/img/linklib.png "Linklib Full Screen")
 
-![alt text](http://evanhgarrett.com/src/img/linklib.png "Logo Title Text 1")
-![alt text](http://evanhgarrett.com/src/img/linklibfullscreen.png "Logo Title Text 1")
-![alt text](http://evanhgarrett.com/src/img/linklibmobile.png "Logo Title Text 1")
+## Linklib allows users to play back audio from within the site.
+![alt text](http://evanhgarrett.com/src/img/linklibfullscreen.png "Linklib Audio Playback")
+## Mobile Friendly
+![alt text](http://evanhgarrett.com/src/img/linklibmobile.png "Linklib Mobile View")
 
 
 
