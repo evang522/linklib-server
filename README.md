@@ -16,7 +16,12 @@ ScreenShots:
 ![alt text](http://evanhgarrett.com/src/img/linklibmobile.png "Linklib Mobile View")
 
 
-
+# Tech Stack
+* HTML Audio
+* React
+* Custom JWT Authentication Middleware 
+* Python3
+* Flask HTTP Framework
 
 
 # Linklib API  (Flask HTTP Framework)
